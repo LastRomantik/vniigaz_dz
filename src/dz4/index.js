@@ -19,6 +19,24 @@ const createNode = el => {
 const appendToParent = (parent, el) => {
     return parent.appendChild(el)
 }
+/**
+ * добавление значения в объект
+ * @param {object} p объект
+ * @param {any} indx индекс
+ * @param {any} val значение
+ */
+const objectAppend = (p, indx, val) => {
+    if (p[indx]) {
+        p[indx].push(val)
+    } else {
+        p[indx] = [val]
+    }
+}
+const avgArray = (arr) => {
+    let sum = 0
+    arr.forEach(i => sum += i * 1)
+    return sum / arr.length
+}
 
 /**
  * Получение списка мест
@@ -73,7 +91,16 @@ const getCityData = place_name => {
  * @param {array} res 
  */
 const renderView = (res) => {
-    templ = `<div>
+    window.tmp = {
+        pm10: {},
+        pm2_5: {}
+    }
+    window.avg = {
+        pm10: {},
+        pm2_5: {},
+    }
+
+    let templ = `<div>
                 <div style="display:inline-block; width:240px; margin:6px 0 0;">%date% (<span style="color:#0072c6">%value1%</span>, <span style="color:red">%value2%</span>)</div>
                 <div style="display:inline-block; height:14px; width:%graf1%px; background:#0072c6;" title="pm10"></div><span style="margin: 0 0 0 14px;">%value1%</span><br>
                 <div style="display:inline-block; height:14px; width:%graf2%px; background:#1ce700; margin-left: 244px;" title="pm2_5"></div><span style="margin: 0 0 0 14px;">%value2%</span>
@@ -85,20 +112,30 @@ const renderView = (res) => {
 
     res.time.map(
         (date, i) => {
-            let d = new Date(date)
+            let d = {
+                date: new Date(date).toLocaleDateString(),
+                time: new Date(date).toLocaleTimeString()
+            }
             div = createNode('div')
             div.innerHTML =
-                templ.replace('%date%', `${d.toLocaleDateString()} ${d.toLocaleTimeString()}`)
+                templ.replace('%date%', `${d.date} ${d.time}`)
                     .replaceAll('%value1%', res.pm10[i])
                     .replace('%graf1%', res.pm10[i] * 10)
                     .replaceAll('%value2%', res.pm2_5[i])
                     .replace('%graf2%', res.pm2_5[i] * 10)
             appendToParent(pm, div)
+
+            objectAppend(tmp.pm10, d.date, res.pm10[i])
+            objectAppend(tmp.pm2_5, d.date, res.pm2_5[i])
         }
     )
     main.innerHTML = link_map;
     appendToParent(main, pm)
 
+    Object.entries(tmp.pm10).forEach(i => avg.pm10[i[0]] = avgArray(i[1]).toFixed(1) * 1)
+    Object.entries(tmp.pm2_5).forEach(i => avg.pm2_5[i[0]] = avgArray(i[1]).toFixed(1) * 1)
+
+    console.log(tmp, avg)
 }
 
 /**
